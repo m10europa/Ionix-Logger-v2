@@ -1,0 +1,9 @@
+{
+ "porta": "COM14 - USB Serial Port (COM14)",
+ "baud": "9600",
+ "formato": "8N1",
+ "intervalo": "120",
+ "comando": "",
+ "cond": "0",
+ "temp": "1"
+}

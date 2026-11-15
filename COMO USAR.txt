@@ -1,0 +1,122 @@
+REGISTRADOR DE CONDUTIVIDADE - OPÇÃO 2 (NOTEBOOK NA PORTA RS-232)
+Ferreira Soluções em Engenharia - Matheus Ferreira de Sousa
+
+O notebook fica ligado ao mCA 150 durante o ensaio e grava uma leitura por
+minuto. Não precisa de ESP32, Wi-Fi nem instalar Python: basta o arquivo
+RegistradorCondutividade.exe.
+
+
+1. O QUE COMPRAR
+----------------
+- 1 adaptador USB para RS-232 (DB9 macho), de preferência com chip FTDI
+  (FT232R). CH340 e PL2303 também servem. Faixa de R$ 30 a R$ 80.
+- Se o notebook ficar longe do aparelho: 1 cabo extensor serial DB9
+  macho-fêmea "reto" (pino a pino), de 1,5 a 3 m.
+- Reserva: 1 adaptador "null modem" DB9 (inverte os pinos 2 e 3). Só é
+  usado se o teste do item 3 não encontrar sinal.
+
+O mCA 150 tem DB9 fêmea atrás. O adaptador (macho) encaixa direto nele.
+
+
+2. PREPARAR O NOTEBOOK (uma vez só)
+-----------------------------------
+- Ligue o adaptador no USB. O Windows instala o driver sozinho e cria uma
+  porta COM (ex.: COM5). Se não criar, instale o driver do fabricante.
+- Copie RegistradorCondutividade.exe para uma pasta do notebook, por
+  exemplo Área de Trabalho\Registrador. Os dados ficam em "dados", ao lado.
+- Configurações > Sistema > Energia: ao fechar a tampa, "Não fazer nada"
+  (na tomada). O programa já impede a suspensão por inatividade, mas não a
+  da tampa.
+- Antes de um ensaio de 24 h, pause o Windows Update por 1 semana, para o
+  notebook não reiniciar sozinho de madrugada.
+
+
+3. PRIMEIRA VEZ: DESCOBRIR A COMUNICAÇÃO
+----------------------------------------
+1) Aparelho ligado, com a célula na solução, mostrando a medida.
+2) Abra o programa e escolha a porta do adaptador (ex.: COM5 - USB Serial).
+3) Clique "Procurar sinal do aparelho". Ele tenta 6 velocidades e 2
+   formatos (até cerca de 1,5 min) e preenche sozinho a que funcionar.
+4) Confira em "Última leitura reconhecida" se o valor bate com o display.
+
+Já confirmado no laboratório (10/11/2026): o mCA 150 envia sozinho, a
+9600 baud, 8N1, sem precisar de comando, uma linha por leitura, assim:
+       419.74 ,uS,27.6,º      (até 2000 µS/cm)
+       2.21 ,mS,27.7,ºC       (acima disso o aparelho troca para mS)
+O programa converte mS para µS/cm sozinho (2,21 mS = 2210 µS/cm), então a
+curva não "cai" quando o aparelho troca de escala. Linhas com o valor em
+branco, que aparecem na troca de escala, são ignoradas.
+
+Se não achar sinal:
+   a) coloque o adaptador null modem e procure de novo;
+   b) se ainda nada, o aparelho pode só enviar quando recebe um pedido.
+      Veja no manual do mCA 150 o comando de leitura (ou consulte a MS
+      Tecnopon), escreva no campo "Comando" e procure de novo.
+   c) se chegar texto mas em lixo, ou em várias linhas por leitura, me
+      mande uma foto da área "Recebido do aparelho" que eu ajusto.
+
+O programa guarda essa configuração. Nos próximos ensaios é só iniciar.
+
+
+4. ENSAIO
+---------
+1) Notebook na tomada. Escreva o nome da amostra (ex.: Soja lote 3).
+2) Registrar: "Todas as leituras" (padrão) grava cada leitura que o
+   aparelho manda. Em 24 h dá dezenas de milhares de linhas, o que o Excel
+   abre sem problema. Para uma planilha menor, escolha "A cada 1 min".
+3) Clique INICIAR ENSAIO. A faixa fica verde e o gráfico aparece.
+4) Pode deixar rodando 24 h. Cada leitura é salva no disco na hora: se
+   faltar energia, o que já foi gravado não se perde.
+5) Ao fim, clique PARAR ENSAIO. A planilha Excel é gerada sozinha na pasta
+   "dados" (ensaio de 24 h leva uns 20 s). Depois clique "Abrir planilha
+   do ensaio", no alto da tela.
+
+Durante um alerta (sem conexão, sem leitura ou notebook na bateria) a
+faixa escura abaixo do título pisca e mostra o símbolo ⚠.
+
+Cores da faixa:
+   verde    = gravando normalmente
+   vermelho = sem conexão, sem dados há 3 leituras ou notebook na bateria
+   cinza    = parado
+
+Se o cabo USB soltar, o programa continua tentando e volta a gravar
+sozinho quando reconectar. Os minutos sem leitura ficam marcados como
+"SEM DADOS" na planilha e aparecem como falha no gráfico.
+
+
+5. ARQUIVOS GERADOS (pasta "dados")
+-----------------------------------
+ensaio_<amostra>_<data>_<hora>.csv   gravado durante o ensaio (cópia de
+                                     segurança, abre no Excel)
+ensaio_<amostra>_<data>_<hora>.xlsx  planilha final, com duas abas:
+
+  Relatório  resumo do ensaio (amostra, início, fim, duração, leituras,
+             condutividade inicial/final/mín./máx., temperatura) e os
+             gráficos Condutividade x Tempo e Temperatura x Tempo.
+             Ensaios acima de 3 h usam o tempo em horas.
+  Dados      tabela do Excel com: Nº, Data, Hora, Tempo (min), Tempo (h),
+             Condutividade (µS/cm), Temperatura (°C), Situação e o texto
+             recebido. Tem filtro em cada coluna e já está pronta para
+             fazer outros gráficos.
+
+"Gerar planilha de um CSV..." refaz a planilha de qualquer ensaio, até de
+um que esteja em andamento, sem interromper a gravação. Também funciona
+com os CSV da versão 1 (corrige o valor em mS).
+
+Versão anterior do programa: pasta "Backup Opção 2" ao lado desta.
+
+
+6. PASTA "codigo" (para manutenção)
+-----------------------------------
+aplicativo.py  tela, gráfico e botões
+nucleo.py      porta serial, gravação e geração do Excel
+simulador.py   finge ser o mCA 150 (mesmo formato do aparelho real) para
+               testar sem ele. Rode "python simulador.py --acelerar 20" e
+               use como porta socket://localhost:5050
+logo.png       logo usada na tela
+
+Para rodar pelo código: pip install pyserial openpyxl
+                         python aplicativo.py
+Para gerar o .exe de novo: pip install pyinstaller e depois
+   pyinstaller --onefile --windowed --name RegistradorCondutividade
+   --add-data "logo.png;." aplicativo.py

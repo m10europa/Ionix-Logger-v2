@@ -1,0 +1,9 @@
+# gerados / pesados
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+*.exe
+*.zip
+*.log
